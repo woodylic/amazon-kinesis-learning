@@ -39,11 +39,13 @@ public class StockTradeRecordProcessor implements IRecordProcessor {
     private String kinesisShardId;
 
     // Reporting interval
-    private static final long REPORTING_INTERVAL_MILLIS = 60000L; // 1 minute
+    //private static final long REPORTING_INTERVAL_MILLIS = 60000L; // 1 minute
+    private static final long REPORTING_INTERVAL_MILLIS = 10000L; // 10 seconds
     private long nextReportingTimeInMillis;
 
     // Checkpointing interval
-    private static final long CHECKPOINT_INTERVAL_MILLIS = 60000L; // 1 minute
+    //private static final long CHECKPOINT_INTERVAL_MILLIS = 60000L; // 1 minute
+    private static final long CHECKPOINT_INTERVAL_MILLIS = 10000L; // 10 seconds
     private long nextCheckpointTimeInMillis;
 
     // Aggregates stats for stock trades

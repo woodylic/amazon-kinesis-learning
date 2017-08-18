@@ -47,7 +47,6 @@ public class StockTradeRecordProcessorFactory implements IRecordProcessorFactory
     /**
      * {@inheritDoc}
      */
-    @Override
     public IRecordProcessor createProcessor() {
         return new StockTradeRecordProcessor();
     }

@@ -66,11 +66,17 @@ public class StockTradesProcessor {
     }
 
     public static void main(String[] args) throws Exception {
-        checkUsage(args);
+//        checkUsage(args);
+//
+//        String applicationName = args[0];
+//        String streamName = args[1];
+//        String regionName = args[2];
 
-        String applicationName = args[0];
-        String streamName = args[1];
-        Region region = RegionUtils.getRegion(args[2]);
+        String applicationName = "StockTradesProcessor";
+        String streamName = "StockTradeStream";
+        String regionName = "cn-north-1";
+
+        Region region = RegionUtils.getRegion(regionName);
         if (region == null) {
             System.err.println(args[2] + " is not a valid AWS region.");
             System.exit(1);

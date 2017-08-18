@@ -1,8 +1,12 @@
-# Learning Amazon Kinesis Development
+根据AWS文档的实践代码：
+http://docs.aws.amazon.com/streams/latest/dev/learning-kinesis-module-one.html
 
-The master branch provides completed code for the [Learning Kinesis Development][learning-kinesis] series in the [Kinesis Developer Guide][kinesis-developer-guide].
+folk自https://github.com/awslabs/amazon-kinesis-learning/tree/learning-module-1，并修改为maven项目。
 
-Each learning module in the series has its own branch (for example, learning-module-1 branch for the first learning module). If you are interested in following the learning plan for this series, it is recommended that you start with the code in the corresponding module branch to stay in sync with each learning module.
+**Producer:**
 
-[learning-kinesis]: http://docs.aws.amazon.com/kinesis/latest/dev/learning-kinesis.html
-[kinesis-developer-guide]: http://docs.aws.amazon.com/kinesis/latest/dev/introduction.html
+/writer/StockTradesWriter，用于持续向StockTradeStream发送模拟股票交易信息。
+
+**Consumer:**
+
+/processor/StockTradesProcessor，用于持续处理StockTradesWriter创建的股票交易流，并输出每分钟买入和卖出最多的股票。

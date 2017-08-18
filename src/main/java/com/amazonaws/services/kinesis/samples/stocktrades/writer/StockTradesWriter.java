@@ -104,10 +104,14 @@ public class StockTradesWriter {
     }
 
     public static void main(String[] args) throws Exception {
-        checkUsage(args);
+//        checkUsage(args);
 
-        String streamName = args[0];
-        String regionName = args[1];
+//        String streamName = args[0];
+//        String regionName = args[1];
+
+        String streamName = "StockTradeStream";
+        String regionName = "cn-north-1";
+
         Region region = RegionUtils.getRegion(regionName);
         if (region == null) {
             System.err.println(regionName + " is not a valid AWS region.");
