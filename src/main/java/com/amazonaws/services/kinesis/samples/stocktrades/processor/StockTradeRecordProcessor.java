@@ -85,7 +85,7 @@ public class StockTradeRecordProcessor implements IRecordProcessor {
     }
 
     private void reportStats() {
-        System.out.println("****** Shard " + kinesisShardId + " stats for last 1 minute ******\n" +
+        System.out.println("****** Shard " + kinesisShardId + " stats for last 10 seconds ******\n" +
                 stockStats + "\n" +
                 "****************************************************************\n");
     }
