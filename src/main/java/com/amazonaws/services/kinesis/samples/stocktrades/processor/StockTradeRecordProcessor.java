@@ -25,7 +25,7 @@ import com.amazonaws.services.kinesis.clientlibrary.exceptions.ShutdownException
 import com.amazonaws.services.kinesis.clientlibrary.exceptions.ThrottlingException;
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessor;
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer;
-import com.amazonaws.services.kinesis.clientlibrary.types.ShutdownReason;
+import com.amazonaws.services.kinesis.clientlibrary.lib.worker.ShutdownReason;
 import com.amazonaws.services.kinesis.model.Record;
 import com.amazonaws.services.kinesis.samples.stocktrades.model.StockTrade;
 
@@ -52,7 +52,6 @@ public class StockTradeRecordProcessor implements IRecordProcessor {
     /**
      * {@inheritDoc}
      */
-    @Override
     public void initialize(String shardId) {
         LOG.info("Initializing record processor for shard: " + shardId);
         this.kinesisShardId = shardId;
@@ -63,7 +62,6 @@ public class StockTradeRecordProcessor implements IRecordProcessor {
     /**
      * {@inheritDoc}
      */
-    @Override
     public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
         for (Record record : records) {
             // process record
@@ -106,7 +104,6 @@ public class StockTradeRecordProcessor implements IRecordProcessor {
     /**
      * {@inheritDoc}
      */
-    @Override
     public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
         LOG.info("Shutting down record processor for shard: " + kinesisShardId);
         // Important to checkpoint after reaching end of shard, so we can start processing data from child shards.
