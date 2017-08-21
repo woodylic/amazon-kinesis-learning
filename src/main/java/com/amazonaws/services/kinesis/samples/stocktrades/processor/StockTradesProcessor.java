@@ -46,31 +46,7 @@ public class StockTradesProcessor {
     private static final Logger PROCESSOR_LOGGER =
             Logger.getLogger("com.amazonaws.services.kinesis.samples.stocktrades.processor");
 
-    private static void checkUsage(String[] args) {
-        if (args.length != 3) {
-            System.err.println("Usage: " + StockTradesProcessor.class.getSimpleName()
-                    + " <application name> <stream name> <region>");
-            System.exit(1);
-        }
-    }
-
-    /**
-     * Sets the global log level to WARNING and the log level for this package to INFO,
-     * so that we only see INFO messages for this processor. This is just for the purpose
-     * of this tutorial, and should not be considered as best practice.
-     *
-     */
-    private static void setLogLevels() {
-        ROOT_LOGGER.setLevel(Level.WARNING);
-        PROCESSOR_LOGGER.setLevel(Level.INFO);
-    }
-
     public static void main(String[] args) throws Exception {
-//        checkUsage(args);
-//
-//        String applicationName = args[0];
-//        String streamName = args[1];
-//        String regionName = args[2];
 
         String applicationName = "StockTradesProcessor";
         String streamName = "StockTradeStream";
@@ -84,19 +60,28 @@ public class StockTradesProcessor {
 
         setLogLevels();
 
+        // 读取AWS Kinesis Client配置
         AWSCredentialsProvider credentialsProvider = CredentialUtils.getCredentialsProvider();
 
         String workerId = String.valueOf(UUID.randomUUID());
+
         KinesisClientLibConfiguration kclConfig =
-                new KinesisClientLibConfiguration(applicationName, streamName, credentialsProvider, workerId)
-            .withRegionName(region.getName())
-            .withCommonClientConfig(ConfigurationUtils.getClientConfigWithUserAgent());
+            new KinesisClientLibConfiguration(
+                    applicationName,
+                    streamName,
+                    credentialsProvider,
+                    workerId)
+                .withRegionName(region.getName())
+                .withCommonClientConfig(ConfigurationUtils.getClientConfigWithUserAgent());
 
         IRecordProcessorFactory recordProcessorFactory = new StockTradeRecordProcessorFactory();
 
-        // Create the KCL worker with the stock trade record processor factory
+        // 创建KLC worker
         Worker worker = new Worker(recordProcessorFactory, kclConfig);
 
+        // 启动KLC worker，该worker会为使用该实例的每一个分片创建一个新线程，
+        // 该线程将持续从Kinesis Stream读取记录，并调用RecordProcessor实例
+        // 处理每批记录。
         int exitCode = 0;
         try {
             worker.run();
@@ -104,8 +89,18 @@ public class StockTradesProcessor {
             LOG.error("Caught throwable while processing data.", t);
             exitCode = 1;
         }
-        System.exit(exitCode);
 
+        System.exit(exitCode);
     }
 
+    /**
+     * Sets the global log level to WARNING and the log level for this package to INFO,
+     * so that we only see INFO messages for this processor. This is just for the purpose
+     * of this tutorial, and should not be considered as best practice.
+     *
+     */
+    private static void setLogLevels() {
+        ROOT_LOGGER.setLevel(Level.WARNING);
+        PROCESSOR_LOGGER.setLevel(Level.INFO);
+    }
 }

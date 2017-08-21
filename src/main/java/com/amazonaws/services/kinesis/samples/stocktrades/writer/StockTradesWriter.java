@@ -17,6 +17,7 @@ package com.amazonaws.services.kinesis.samples.stocktrades.writer;
 
 import java.nio.ByteBuffer;
 
+import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -41,11 +42,33 @@ public class StockTradesWriter {
 
     private static final Log LOG = LogFactory.getLog(StockTradesWriter.class);
 
-    private static void checkUsage(String[] args) {
-        if (args.length != 2) {
-            System.err.println("Usage: " + StockTradesWriter.class.getSimpleName()
-                    + " <stream name> <region>");
+    public static void main(String[] args) throws Exception {
+
+        String streamName = "StockTradeStream";
+        String regionName = "cn-north-1";
+
+        Region region = RegionUtils.getRegion(regionName);
+        if (region == null) {
+            System.err.println(regionName + " is not a valid AWS region.");
             System.exit(1);
+        }
+
+        // 初始化KinesisClient
+        AmazonKinesisClientBuilder builder = AmazonKinesisClient.builder();
+        builder.setCredentials(CredentialUtils.getCredentialsProvider());
+        builder.setClientConfiguration(ConfigurationUtils.getClientConfigWithUserAgent());
+        builder.setRegion(region.getName());
+        AmazonKinesis kinesisClient = builder.build();
+
+        // 确认stream存在并且active
+        validateStream(kinesisClient, streamName);
+
+        // 每100毫秒发送一条股票交易记录。
+        StockTradeGenerator stockTradeGenerator = new StockTradeGenerator();
+        while(true) {
+            StockTrade trade = stockTradeGenerator.getRandomTrade();
+            sendStockTrade(trade, kinesisClient, streamName);
+            Thread.sleep(100);
         }
     }
 
@@ -82,6 +105,8 @@ public class StockTradesWriter {
      */
     private static void sendStockTrade(StockTrade trade, AmazonKinesis kinesisClient,
             String streamName) {
+
+        //获得需要发送的消息体
         byte[] bytes = trade.toJsonAsBytes();
         // The bytes could be null if there is an issue with the JSON serialization by the Jackson JSON library.
         if (bytes == null) {
@@ -89,6 +114,7 @@ public class StockTradesWriter {
             return;
         }
 
+        //把待发送消息封装为PutRecordRequest，注意设置PartitionKey。
         LOG.info("Putting trade: " + trade.toString());
         PutRecordRequest putRecord = new PutRecordRequest();
         putRecord.setStreamName(streamName);
@@ -96,44 +122,11 @@ public class StockTradesWriter {
         putRecord.setPartitionKey(trade.getTickerSymbol());
         putRecord.setData(ByteBuffer.wrap(bytes));
 
+        //发送到Kinesis Stream
         try {
             kinesisClient.putRecord(putRecord);
         } catch (AmazonClientException ex) {
             LOG.warn("Error sending record to Amazon Kinesis.", ex);
         }
     }
-
-    public static void main(String[] args) throws Exception {
-//        checkUsage(args);
-
-//        String streamName = args[0];
-//        String regionName = args[1];
-
-        String streamName = "StockTradeStream";
-        String regionName = "cn-north-1";
-
-        Region region = RegionUtils.getRegion(regionName);
-        if (region == null) {
-            System.err.println(regionName + " is not a valid AWS region.");
-            System.exit(1);
-        }
-
-        AWSCredentials credentials = CredentialUtils.getCredentialsProvider().getCredentials();
-
-        AmazonKinesis kinesisClient = new AmazonKinesisClient(credentials,
-                ConfigurationUtils.getClientConfigWithUserAgent());
-        kinesisClient.setRegion(region);
-
-        // Validate that the stream exists and is active
-        validateStream(kinesisClient, streamName);
-
-        // Repeatedly send stock trades with a 100 milliseconds wait in between
-        StockTradeGenerator stockTradeGenerator = new StockTradeGenerator();
-        while(true) {
-            StockTrade trade = stockTradeGenerator.getRandomTrade();
-            sendStockTrade(trade, kinesisClient, streamName);
-            Thread.sleep(100);
-        }
-    }
-
 }

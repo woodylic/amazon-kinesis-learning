@@ -32,6 +32,10 @@ import com.amazonaws.services.kinesis.samples.stocktrades.model.StockTrade;
 /**
  * Processes records retrieved from stock trades stream.
  *
+ * 此类实现IRecordProcessor的三个方法：
+ * initialize - 由KLC调用，让RecordProcessor了解何时准备好开始接收记录。
+ * processRecords - 用于处理接收的记录。
+ * shutdown - 由KLC调用，让RecordProcessor了解何时停止接收记录。
  */
 public class StockTradeRecordProcessor implements IRecordProcessor {
 
@@ -64,34 +68,37 @@ public class StockTradeRecordProcessor implements IRecordProcessor {
     /**
      * {@inheritDoc}
      */
+    public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
+        LOG.info("Shutting down record processor for shard: " + kinesisShardId);
+        // Important to checkpoint after reaching end of shard, so we can start processing data from child shards.
+        if (reason == ShutdownReason.TERMINATE) {
+            checkpoint(checkpointer);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
+
+        // 统计某一分片的交易信息。
         for (Record record : records) {
             // process record
             processRecord(record);
         }
 
-        // If it is time to report stats as per the reporting interval, report stats
+        // 如果到了统计间隔，打印结果并重置。
         if (System.currentTimeMillis() > nextReportingTimeInMillis) {
             reportStats();
             resetStats();
             nextReportingTimeInMillis = System.currentTimeMillis() + REPORTING_INTERVAL_MILLIS;
         }
 
-        // Checkpoint once every checkpoint interval
+        // 如果到了Checkpoint时间，执行checkpoint。
         if (System.currentTimeMillis() > nextCheckpointTimeInMillis) {
             checkpoint(checkpointer);
             nextCheckpointTimeInMillis = System.currentTimeMillis() + CHECKPOINT_INTERVAL_MILLIS;
         }
-    }
-
-    private void reportStats() {
-        System.out.println("****** Shard " + kinesisShardId + " stats for last 10 seconds ******\n" +
-                stockStats + "\n" +
-                "****************************************************************\n");
-    }
-
-    private void resetStats() {
-        stockStats = new StockStats();
     }
 
     private void processRecord(Record record) {
@@ -103,15 +110,14 @@ public class StockTradeRecordProcessor implements IRecordProcessor {
         stockStats.addStockTrade(trade);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
-        LOG.info("Shutting down record processor for shard: " + kinesisShardId);
-        // Important to checkpoint after reaching end of shard, so we can start processing data from child shards.
-        if (reason == ShutdownReason.TERMINATE) {
-            checkpoint(checkpointer);
-        }
+    private void reportStats() {
+        System.out.println("****** Shard " + kinesisShardId + " stats for last 10 seconds ******\n" +
+                stockStats + "\n" +
+                "****************************************************************\n");
+    }
+
+    private void resetStats() {
+        stockStats = new StockStats();
     }
 
     private void checkpoint(IRecordProcessorCheckpointer checkpointer) {
